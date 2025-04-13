@@ -2,6 +2,50 @@
 jmp start
 	
 	; here all the LABEL declarations
+	top_row: db '/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ '  , 0
+	welcome: db ' -- Welcome To -- ' ,0
+	S_row1 db '  #####  ', 0
+    S_row2 db ' ##   ## ', 0
+    S_row3 db ' ##       ', 0
+    S_row4 db '  ##      ', 0
+    S_row5 db '    ##    ', 0
+    S_row6 db '#    ##   ', 0
+    S_row7 db ' #####    ', 0
+
+    U_row1 db '##    ## ', 0
+    U_row2 db '##    ## ', 0
+    U_row3 db '##    ## ', 0
+    U_row4 db '##    ## ', 0
+    U_row5 db '##    ## ', 0
+    U_row6 db ' ##  ##  ', 0
+    U_row7 db '  ####    ', 0
+
+    D_row1 db '######   ', 0
+    D_row2 db '##    ## ', 0
+    D_row3 db '##     ##', 0
+    D_row4 db '##     ##', 0
+    D_row5 db '##     ## ', 0
+    D_row6 db '##    ## ', 0
+    D_row7 db '######   ', 0
+
+    O_row1 db ' ######  ', 0
+    O_row2 db '##    ## ', 0
+    O_row3 db '##    ## ', 0
+    O_row4 db '##    ## ', 0
+    O_row5 db '##    ## ', 0
+    O_row6 db '##    ## ', 0
+    O_row7 db ' ######  ', 0
+
+    K_row1 db '##    ## ', 0
+    K_row2 db '##   ##  ', 0
+    K_row3 db '##  ##   ', 0
+    K_row4 db '#####    ', 0
+    K_row5 db '##  ##   ', 0
+    K_row6 db '##   ##  ', 0
+    K_row7 db '##    ## ', 0
+
+	press: db "Press Space To Start..." , 0
+	
 	menu_msg db '- Main Menu - ', 0
     title_msg db 'Welcome to Project Sudoku', 0 
     timerEnabled: db 1        ; 1 = Timer running, 0 = Timer stopped	
@@ -27,6 +71,7 @@ jmp start
 	input_msglvl db 'Enter Choice for Level (E/M/H) : ',0
 	input_grid db 0,0
 	input_lvl dw 0,0
+	notes: db "[n] notes"
 	
 	invalidinput db '- Invalid Input -',0
 	title_box db "4  x  4  G R I D", 0
@@ -2487,6 +2532,8 @@ mov bl, 0x0B       ; Attribute byte (e.g., bright yellow on blue)
 mov bh, 0x00        ; Video page (0 for default)
 mov cx, 1           ; Number of times to print the character
 int 0x10            ; Call BIOS interrupt
+
+
 	
 	call sleep
 	call sleep
@@ -4482,6 +4529,7 @@ off_delaycomp:
 	popa
     ret
 	
+	
 	;===================================================ROW COL COMPLETION FUNCS========================================================;
 	checkrow_completion_9x9_p2:
 	
@@ -4512,8 +4560,12 @@ off_delaycomp:
    je comp_p2
    jmp not_comp_p2
    
+  
    
    comp_p2:
+    mov byte[fazooldh1],dh
+   mov byte[fazooldl1],dl
+   call animation_row
    call completion_sound
    
    not_comp_p2:
@@ -4580,11 +4632,89 @@ not_completed:
 completed:
     ; Restore original cursor position
 	call completion_sound
+	call animation_row
     mov dh, [fazooldh1]
     mov dl, [fazooldl1]
 	pop bx
     ret
 	;============================================================================================================;
+	
+animation_row:
+  pusha 
+	push es
+	
+	
+; Set cursor position (row and column)
+mov ah, 0x02        ; Function to set cursor position
+;mov bh, 0x00        ; Video page (0 for default)
+mov dh, [fazooldh1]          ; Row (0-based, e.g., row 10)
+mov dl, 58         ; Column (0-based, e.g., column 20)
+int 0x10            ; Call BIOS interrupt
+
+; Print character with attribute
+mov ah, 0x09        ; Function to write character and attribute
+mov al, 1           ; Black smiley face (☻)
+mov bl, 0x0B       ; Attribute byte (e.g., bright yellow on blue)
+;mov bh, 0x00        ; Video page (0 for default)
+mov cx, 1           ; Number of times to print the character
+int 0x10            ; Call BIOS interrupt
+	
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	call sleep
+	
+	mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+   ; mov bh, 0        ; output on page 0
+    mov bl, 01h      ; normal white on black attribute
+      mov dh, [fazooldh1]          ; Row (0-based, e.g., row 10)
+mov dl, 58         ; Column (0-based, e.g., column 20)
+ ; row 4, column 31 (centered title position)
+    mov cx, 1     ; length of the string
+    push cs
+    pop es           ; set ES to code segment
+    mov bp, space
+    int 0x10         ; call BIOS video interrupt to print string
+	
+	
+	
+	pop es
+	popa
+	ret
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	;=============================================================================================================;
      
 	checkcol_completion_9x9_p1:
 	
@@ -8833,7 +8963,7 @@ timer:
     push ax
     push cx
 
-    cmp word[cs:timerEnabled],0
+    cmp byte[timerEnabled],0
 	je endtimer
 	
     inc word [cs:tickcount] ; Increment tick count
@@ -8901,6 +9031,9 @@ print9x9_details:
     mov bp, mistake
     int 0x10         ; call BIOS video interrupt to print string
 	
+		
+	
+	
 	mov ax,0x08
 	push ax
 	mov ax,0x97
@@ -8949,6 +9082,19 @@ print9x9_details:
     pop es           ; set ES to code segment
     mov bp, remove
     int 0x10         ; call BIOS video interrupt to print string
+	
+	mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0Eh      ; normal white on black attribute
+    mov dx, 0x0504   ; row 4, column 31 (centered title position)
+    mov cx, 9     ; length of the string
+    push cs
+    pop es           ; set ES to code segment
+    mov bp, notes
+    int 0x10         ; call BIOS video interrupt to print string
+	
+	
 	
 	mov ah, 0x13   
     mov al, 1       
@@ -9123,6 +9269,19 @@ print4x4_details:
     mov bp, remove
     int 0x10         ; call BIOS video interrupt to print string
 	
+	mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0Eh      ; normal white on black attribute
+    mov dx, 0x0505   ; row 4, column 31 (centered title position)
+    mov cx, 9     ; length of the string
+    push cs
+    pop es           ; set ES to code segment
+    mov bp, notes
+    int 0x10         ; call BIOS video interrupt to print string
+	
+	
+	
 	mov ah, 0x13     
     mov al, 1        
     mov bh, 0      
@@ -9140,7 +9299,7 @@ print4x4_details:
 	push ax
 	mov ax,[mistake_count]
 	push ax
-	call printnum1
+	call printnum2
 
 	mov ah, 0x13     
     mov al, 1        
@@ -9263,6 +9422,53 @@ nextdigit:
     pop bp
     ret 6               ; Return and clean up the stack
 	
+	  
+printnum2:
+
+    push bp
+    mov bp, sp
+    push es
+    push ax
+    push bx
+    push cx
+    push dx
+    push di
+
+    mov di, 80          ; Load DI with columns per row
+    mov ax, [bp+8]      ; Load AX with row number
+    mul di              ; Multiply with columns per row
+    mov di, ax          ; Save result in DI
+    add di, [bp+6]      ; Add column number
+    shl di, 1           ; Turn into byte count
+    add di, 8           ; Offset to the desired video memory location
+
+    mov ax, 0xb800      ; Video memory segment
+    mov es, ax          ; Point ES to video base
+
+    mov ax, [bp+4]      ; Load number in AX
+    mov bx, 10          ; Use base 10 for division
+    mov cx, 3           ; Maximum number of digits to process
+
+nextdigit2:
+
+    xor dx, dx          ; Clear upper half of dividend
+    div bx              ; Divide AX by 10
+    add dl, '0'         ; Convert remainder to ASCII
+    mov dh, 0x0F        ; Attach normal attribute
+    mov [es:di], dx     ; Print character on screen
+    sub di, 2           ; Move to previous screen location
+   test ax,ax
+   jnz nextdigit2
+
+    pop di
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop es
+    pop bp
+    ret 6               ; Return and clean up the stack
+	
 	
 	;=========================================LOSING SCREEN======================================;
 	
@@ -9271,6 +9477,8 @@ nextdigit:
 	pusha
 	push es
 	
+	    mov byte[timerEnabled],0
+
 	 ; Set video mode to 80x25 text mode (Mode 3)
         mov ah, 00h  ; Set video mode function
         mov al, 03h  ; 80x25 text mode
@@ -9563,7 +9771,7 @@ nextdigit:
 	push ax
 	mov ax,[minutes]
 	push ax
-	call printnum1
+	call printnum2
 	
 	
     mov ah, 0x13     ; service 13h - print string
@@ -9585,7 +9793,7 @@ nextdigit:
 	push ax
 	mov ax,[seconds]
 	push ax
-	call printnum1
+	call printnum2
 	
 		
 		
@@ -9607,7 +9815,7 @@ nextdigit:
 	push ax
 	mov ax,[score_count]
 	push ax
-	call printnum1
+	call printnum2
 		;------------------------------------------------------------
 		; this displays the message "Try New Level Perhaps "
 		mov ah, 02h
@@ -10215,14 +10423,342 @@ off_delay:
 	pop es
 	popa
 	ret
+
+title_sscreen:
+	call clrscr
 	
+print_top:
 
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x8A              ; normal white on black attribute
+    mov dx, 0x0308     ; row 0, column  (cursor position)
+    mov cx,66    ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp,top_row  ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+	
+print_welcome:
+
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x0F              ; normal white on black attribute
+    mov dx, 0x051F     ; row 0, column  (cursor position)
+    mov cx,17   ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp,welcome  ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+print_bot:
+
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x8A              ; normal white on black attribute
+    mov dx, 0x1208     ; row 0, column  (cursor position)
+    mov cx,66    ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp,top_row  ; offset of the string
+    int 0x10   
+	
+print_s:
+
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x0E              ; normal white on black attribute
+    mov dx, 0x070B     ; row 0, column  (cursor position)
+    mov cx, 8      ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp,S_row1  ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+	 ; Print on page 0 (row 2)
+    mov dx, 0x080B   ; row 2, column (cursor position)
+    mov bp, S_row2      ; offset of the string
+    int 0x10          ; call BIOS video interrupt to print string
+	
+ ; Print on page 0 (row 3)
+    mov dx, 0x090B   ; row 3, column (cursor position)
+    mov bp, S_row3      ; offset of the string
+    int 0x10          ; call BIOS video interrupt to print string
+	
+ ; Print on page 0 (row 4)
+    mov dx, 0x0A0B    ; row 4, column (cursor position)
+    mov bp, S_row4      ; offset of the string
+    int 0x10          ; call BIOS video interrupt to print string
+	
+ ; Print on page 0 (row 5, different color)
+    mov dx, 0x0B0B    ; row 5, column (cursor position)
+    mov bp,S_row5      ; offset of the string
+    int 0x10          ; call BIOS video interrupt to print string
+	
+ ; Print on page 0 (row 6)
+    mov dx, 0x0C0B    ; row 6, column (cursor position)
+    mov bp, S_row6      ; offset of the string
+    int 0x10          ; call BIOS video interrupt to print string
+	
+    mov dx, 0x0D0B   ; row 6, column (cursor position)
+    mov bp, S_row7     ; offset of the string
+    int 0x10   
+
+print_u:
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x0E      ; normal white on black attribute
+    mov dx, 0x0715   ; row 7, column (cursor position)
+    mov cx, 8        ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp, U_row1   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0815   ; row 8, column (cursor position)
+    mov bp, U_row2   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0915   ; row 9, column (cursor position)
+    mov bp, U_row3   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0A15   ; row 10, column (cursor position)
+    mov bp, U_row4   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0B15   ; row 11, column (cursor position)
+    mov bp, U_row5   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0C15   ; row 12, column (cursor position)
+    mov bp, U_row6   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0D15   ; row 13, column (cursor position)
+    mov bp, U_row7   ; offset of the string
+    int 0x10   
+
+print_d:
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x8F     ; normal white on black attribute
+    mov dx, 0x071F   ; row 7, column (cursor position)
+    mov cx, 10        ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp, D_row1   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x081F   ; row 8, column (cursor position)
+    mov bp, D_row2   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x091F   ; row 9, column (cursor position)
+    mov bp, D_row3   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0A1F   ; row 10, column (cursor position)
+    mov bp, D_row4   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0B1F   ; row 11, column (cursor position)
+    mov bp, D_row5   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0C1F   ; row 12, column (cursor position)
+    mov bp, D_row6   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0D1F   ; row 13, column (cursor position)
+    mov bp, D_row7   ; offset of the string
+    int 0x10   
+
+print_o:
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x8F     ; normal white on black attribute
+    mov dx, 0x0729   ; row 7, column (cursor position)
+    mov cx, 8        ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp, O_row1   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0829   ; row 8, column (cursor position)
+    mov bp, O_row2   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0929   ; row 9, column (cursor position)
+    mov bp, O_row3   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0A29   ; row 10, column (cursor position)
+    mov bp, O_row4   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0B29   ; row 11, column (cursor position)
+    mov bp, O_row5   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0C29   ; row 12, column (cursor position)
+    mov bp, O_row6   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0D29   ; row 13, column (cursor position)
+    mov bp, O_row7   ; offset of the string
+    int 0x10   
+	
+print_k:
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x0E      ; normal white on black attribute
+    mov dx, 0x0733   ; row 7, column (cursor position)
+    mov cx, 8        ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp, K_row1   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0833   ; row 8, column (cursor position)
+    mov bp, K_row2   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0933   ; row 9, column (cursor position)
+    mov bp, K_row3   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0A33   ; row 10, column (cursor position)
+    mov bp, K_row4   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0B33   ; row 11, column (cursor position)
+    mov bp, K_row5   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0C33   ; row 12, column (cursor position)
+    mov bp, K_row6   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0D33   ; row 13, column (cursor position)
+    mov bp, K_row7   ; offset of the string
+    int 0x10   
+
+print_u1:
+
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x0E     ; normal white on black attribute
+    mov dx, 0x073D   ; row 7, column (cursor position)
+    mov cx, 8        ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp, U_row1   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x083D   ; row 8, column (cursor position)
+    mov bp, U_row2   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x093D   ; row 9, column (cursor position)
+    mov bp, U_row3   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0A3D   ; row 10, column (cursor position)
+    mov bp, U_row4   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0B3D   ; row 11, column (cursor position)
+    mov bp, U_row5   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0C3D   ; row 12, column (cursor position)
+    mov bp, U_row6   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+    mov dx, 0x0D3D   ; row 13, column (cursor position)
+    mov bp, U_row7   ; offset of the string
+    int 0x10   
+	
+print_enter:
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x0F    ; normal white on black attribute
+    mov dx, 0x101B   ; row 7, column (cursor position)
+    mov cx, 23    ; length of the string
+	
+    mov bp, press   ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+	
+wait_for_space:
+
+        mov ah, 00h       ; BIOS keyboard interrupt function to read a key press
+        int 16h           ; Wait for a key press
+        cmp al, ' '      ; Check if the scanned key is the Spacebar (scan code 0x39)
+        jne wait_for_space ; If not Spacebar, loop back and wait for another key press
+
+    ret
+	
+title_sscreene:
+	call clrscr
+	
+print_tope:
+
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x8A              ; normal white on black attribute
+    mov dx, 0x0308     ; row 0, column  (cursor position)
+    mov cx,66    ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp,top_row  ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+	
+print_welcomee:
+
+    mov ah, 0x13     ; service 13h - print string
+    mov al, 1        ; subservice 01 - update cursor
+    mov bh, 0        ; output on page 0
+    mov bl, 0x0F              ; normal white on black attribute
+    mov dx, 0x051F     ; row 0, column  (cursor position)
+    mov cx,17   ; length of the string
+
+    push cs
+    pop es           ; set ES to code segment
+    mov bp,welcome  ; offset of the string
+    int 0x10         ; call BIOS video interrupt to print string
+
+
+	
 start:
-
+	
+	call title_sscreen
+		
 	mov byte[mistake_count],0
 	mov byte[score_count],0
 	mov byte[mistake_lost],0
 
+	
 	mov ah, 00h  
 	mov al, 03h 
 	int 10h      
@@ -10428,14 +10964,11 @@ start:
 	mov dh, 20   ; Row 21
 	mov dl, 41   ; Column 0
 	int 10h    
-	
 	;------------------------------------------------------------  
 	; It takes the input for which difficulty to choose (Easy/Med/Hard)
 	mov si, input_msglvl
 	call print_string
-	
 	;------------------------------------------------------------  
-	
 	call get_input
 	cmp al,'e'
 	je correct
@@ -10450,7 +10983,8 @@ start:
 
 endgame:
 
-    mov byte[cs:timerEnabled],0
+    mov byte[timerEnabled],0
+
 	mov byte[mistake_count],0
 	mov byte[score_count],0
 	
