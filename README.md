@@ -1,5 +1,5 @@
 # Assembly-Sudoku
-Assembly Language Sudoku Game – A classic Sudoku puzzle game implemented entirely in x86 assembly language. This project showcases low-level programming techniques, including handling user input, drawing the Sudoku grid, and implementing game logic without relying on high-level libraries .
+Assembly Language Sudoku Game – A classic Sudoku puzzle game implemented entirely in x86 assembly language. This project showcases low-level programming techniques, including handling user input, drawing the Sudoku grids 9x9 and 4x4 , and implementing game logic without relying on high-level libraries .
 
 The game is designed to run on x86 architecture, showcasing the capabilities of assembly language in game development.
 
